@@ -1,0 +1,16 @@
+services:
+  semantic-hub:
+    build: .
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      HUB_DEMO: "1"
+      HUB_ALLOW_DEMO_NETWORK: "1"
+      HUB_DB: /data/hub.db
+    volumes:
+      - hub-demo-data:/data
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+volumes:
+  hub-demo-data:

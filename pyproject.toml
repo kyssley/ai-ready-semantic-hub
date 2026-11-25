@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ai-ready-semantic-hub"
+version = "0.1.0"
+description = "Versioned business semantics for BI and AI agents"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [{name = "AI-Ready Semantic Hub contributors"}]
+dependencies = ["fastapi>=0.115,<1", "uvicorn>=0.30,<1", "pydantic>=2.10,<3", "PyYAML>=6.0.2,<7", "httpx>=0.28,<1"]
+
+[project.optional-dependencies]
+mcp = ["mcp>=1.28,<2"]
+dev = ["ruff>=0.11,<1", "build>=1.2,<2", "playwright>=1.50,<2"]
+
+[project.scripts]
+semantic-hub = "semantic_hub.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+semantic_hub = ["static/*", "demo.yaml"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]

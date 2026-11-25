@@ -1,0 +1,6 @@
+include README.zh-CN.md CONTRIBUTING.md SECURITY.md CODE_OF_CONDUCT.md CHANGELOG.md
+include Dockerfile compose.yaml compose.production.yaml requirements.lock uv.lock
+recursive-include docs *.md *.json
+recursive-include examples *.yaml *.json
+recursive-include scripts *.py
+recursive-include tests *.py

@@ -1,0 +1,15 @@
+services:
+  semantic-hub:
+    build: .
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      HUB_TOKENS: ${HUB_TOKENS:?Set HUB_TOKENS to a JSON object of secure named tokens}
+      HUB_DB: /data/hub.db
+    volumes:
+      - hub-production-data:/data
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+volumes:
+  hub-production-data:
