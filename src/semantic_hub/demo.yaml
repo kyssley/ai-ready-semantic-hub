@@ -1,0 +1,133 @@
+schema_version: '1.0'
+name: Commerce Intelligence
+models:
+  - id: order_items
+    label: Order items / 订单明细
+    description: Synthetic cross-platform commerce model. One row per platform, shop, order and line. 示例数据，不包含真实业务信息。
+    owner: commerce-analytics
+    tags: [commerce, sales]
+    synonyms: [订单, 销售明细]
+    table: analytics.order_items
+    primary_key: [platform, shop_id, order_id, line_id]
+    columns:
+      - {name: platform, data_type: string, label: Platform}
+      - {name: shop_id, data_type: string, label: Shop}
+      - {name: order_id, data_type: string, label: Order}
+      - {name: line_id, data_type: string, dimension: false}
+      - {name: order_key, data_type: string, dimension: false, description: Collision-free order surrogate across platform/shop/order.}
+      - {name: sku, data_type: string, label: SKU}
+      - {name: order_date, data_type: date, label: Order date}
+      - {name: currency, data_type: string, label: Currency}
+      - {name: status, data_type: string, label: Order status}
+      - {name: is_sample, data_type: boolean, label: Sample order}
+      - {name: quantity, data_type: integer, dimension: false}
+      - {name: seller_net_amount, data_type: number, dimension: false, description: "Line merchandise amount after seller discount, before platform subsidy; excludes shipping and tax."}
+      - {name: refund_amount, data_type: number, dimension: false}
+  - id: shops
+    label: Shops / 店铺
+    description: One row per platform and shop ID. Composite joins preserve platform identity.
+    owner: commerce-analytics
+    tags: [commerce]
+    table: analytics.shops
+    primary_key: [platform, shop_id]
+    columns:
+      - {name: platform, data_type: string}
+      - {name: shop_id, data_type: string}
+      - {name: shop_name, data_type: string}
+      - {name: region, data_type: string}
+      - {name: brand, data_type: string}
+  - id: inventory
+    label: Inventory / 库存快照
+    description: Daily end-of-day SKU inventory. Do not sum across dates without defining a time rule.
+    owner: supply-chain
+    tags: [supply_chain]
+    table: analytics.inventory
+    primary_key: [snapshot_date, warehouse_id, sku]
+    columns:
+      - {name: snapshot_date, data_type: date}
+      - {name: warehouse_id, data_type: string}
+      - {name: sku, data_type: string}
+      - {name: available_qty, data_type: integer, dimension: false}
+relationships:
+  - id: order_items_shop
+    from_model: order_items
+    to_model: shops
+    from_columns: [platform, shop_id]
+    to_columns: [platform, shop_id]
+    cardinality: many_to_one
+    description: Join both platform and shop_id; shop IDs alone are not globally unique.
+metrics:
+  - id: seller_gmv
+    label: Seller GMV / 商家折后 GMV
+    description: Merchandise value after seller discount, excluding cancelled and sample orders. 按币种统计商家折后成交额。
+    owner: commerce-analytics
+    tags: [commerce, revenue]
+    synonyms: [GMV, 成交额, 销售额, 商家折后金额]
+    model: order_items
+    aggregation: sum
+    column: seller_net_amount
+    unit: currency
+    currency_dimension: order_items.currency
+    time_dimension: order_items.order_date
+    filters:
+      - {field: order_items.status, op: ne, value: cancelled}
+      - {field: order_items.is_sample, op: eq, value: false}
+    business_rules:
+      - Seller discounts reduce GMV; platform-funded subsidies do not reduce this metric.
+      - Shipping, taxes, cancelled orders and sample orders are excluded.
+      - Never sum different currencies. Filter one currency or group by currency; no FX conversion is implemented.
+      - Order date is a precomputed business-local date; ingestion owns timezone conversion.
+  - id: units_sold
+    label: Units sold / 销量
+    description: Quantity sold on non-cancelled, non-sample orders.
+    owner: commerce-analytics
+    tags: [commerce]
+    synonyms: [销量, 销售件数]
+    model: order_items
+    aggregation: sum
+    column: quantity
+    time_dimension: order_items.order_date
+    filters:
+      - {field: order_items.status, op: ne, value: cancelled}
+      - {field: order_items.is_sample, op: eq, value: false}
+  - id: order_count
+    label: Orders / 订单数
+    description: Distinct collision-free order keys across platforms and shops. Count orders rather than order lines.
+    owner: commerce-analytics
+    tags: [commerce]
+    synonyms: [订单数, 订单量]
+    model: order_items
+    aggregation: count_distinct
+    column: order_key
+    time_dimension: order_items.order_date
+    filters:
+      - {field: order_items.status, op: ne, value: cancelled}
+      - {field: order_items.is_sample, op: eq, value: false}
+  - id: refund_rate
+    label: Refund value ratio / 退款金额比
+    description: Ratio of total refund amount to total seller net amount within one currency. Not the average of row ratios.
+    owner: finance-analytics
+    visibility: internal
+    tags: [finance]
+    synonyms: [退款率, refund ratio]
+    model: order_items
+    aggregation: ratio
+    column: refund_amount
+    denominator: seller_net_amount
+    unit: percent
+    currency_dimension: order_items.currency
+    time_dimension: order_items.order_date
+    business_rules: [Zero denominator returns NULL. Review refund timing before reconciliation use.]
+terms:
+  - id: gmv
+    label: GMV / 商品交易总额
+    description: This catalog uses seller-after-discount merchandise value. Buyer payment and settlement revenue are different concepts.
+    owner: commerce-analytics
+    synonyms: [成交金额, 营业额]
+    metric_ids: [seller_gmv]
+  - id: valid_order
+    label: Valid order / 有效订单
+    description: Excludes cancelled and sample orders. Refunds are tracked separately.
+    owner: commerce-analytics
+    synonyms: [有效订单, 正常订单]
+    metric_ids: [seller_gmv, units_sold, order_count]
