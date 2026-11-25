@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Semantic Hub · AI-ready business context</title>
+    <link rel="icon" href="/static/icon.svg" />
+    <link rel="stylesheet" href="/static/style.css" />
+    <script src="/static/app.js" defer></script>
+  </head>
+  <body>
+    <aside class="sidebar">
+      <a class="brand" href="#overview"
+        ><span class="logo">S<span>h</span></span>
+        <div>Semantic Hub<small>AI-READY · OPEN SOURCE</small></div></a
+      >
+      <div class="workspace">
+        <span class="workspace-icon">C</span>
+        <div id="workspaceName">Commerce Intelligence</div>
+        <span class="muted">⌄</span>
+      </div>
+      <div class="nav-label">WORKSPACE</div>
+      <nav aria-label="Main navigation">
+        <a href="#overview" data-page="overview"><span>◈</span>Overview</a>
+        <a href="#catalog" data-page="catalog"
+          ><span>▦</span>Semantic catalog <b id="catalogCount">—</b></a
+        >
+        <a href="#graph" data-page="graph"><span>⌘</span>Relationships</a>
+        <a href="#playground" data-page="playground"
+          ><span>⌁</span>Query playground</a
+        >
+        <a href="#context" data-page="context"><span>✧</span>Agent context</a>
+        <a href="#editor" data-page="editor" class="editor-only"
+          ><span>≡</span>Definition editor</a
+        >
+        <a href="#history" data-page="history" class="editor-only"
+          ><span>◷</span>Version history</a
+        >
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="connection"><i></i> Connected to local hub</div>
+        <a href="/docs" target="_blank" rel="noopener">API documentation ↗</a
+        ><button id="tokenButton" class="text-button">API access token</button>
+        <div class="version">v0.1.0 <span id="roleLabel">Loading…</span></div>
+      </div>
+    </aside>
+    <div class="shell">
+      <header class="topbar">
+        <div>
+          <span class="muted">Workspace</span><span class="slash">/</span
+          ><span id="breadcrumb">Overview</span>
+        </div>
+        <div class="top-actions">
+          <span class="pill" id="environment">Local workspace</span
+          ><span class="avatar">SH</span>
+        </div>
+      </header>
+      <main id="main" tabindex="-1"></main>
+      <footer>
+        AI-Ready Semantic Hub
+        <span>Explicit definitions. Reproducible answers.</span>
+      </footer>
+    </div>
+    <div id="toast" role="status" hidden></div>
+    <dialog id="tokenDialog">
+      <form id="tokenForm">
+        <h2>Connect to your hub</h2>
+        <p>
+          Enter an API token. It stays in this tab's memory and is cleared on
+          reload.
+        </p>
+        <label
+          >Bearer token<input
+            id="tokenInput"
+            type="password"
+            autocomplete="off"
+            required
+        /></label>
+        <div class="actions">
+          <button type="button" id="cancelToken" class="secondary">
+            Cancel</button
+          ><button type="submit">Connect</button>
+        </div>
+      </form>
+    </dialog>
+  </body>
+</html>
