@@ -1,0 +1,13 @@
+name: Feature request / 功能建议
+description: Explain the business problem and proposed semantic behavior.
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem and use case / 问题与场景
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior and tradeoffs / 方案与取舍
