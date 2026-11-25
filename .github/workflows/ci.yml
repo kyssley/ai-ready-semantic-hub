@@ -1,0 +1,59 @@
+name: CI
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.11', '3.12', '3.13']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --frozen --extra dev --extra mcp
+      - run: uv run ruff check src tests scripts
+      - run: uv run ruff format --check src tests scripts
+      - run: uv run python -m unittest discover -s tests -v
+      - run: uv run semantic-hub validate examples/commerce.yaml
+      - run: uv run semantic-hub schema > /tmp/schema.json && diff docs/catalog.schema.json /tmp/schema.json
+      - run: uv run python -m build
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --frozen --extra dev --extra mcp
+      - run: uv run python -m playwright install --with-deps chromium
+      - name: Browser workflow
+        run: |
+          uv run semantic-hub serve --demo --db /tmp/ui-test.db > /tmp/hub.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          for attempt in $(seq 1 30); do
+            curl --fail http://127.0.0.1:8000/healthz && break
+            sleep 1
+          done
+          uv run python scripts/browser_smoke.py
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t semantic-hub:test .
+      - name: Container health
+        run: |
+          docker run -d --name hub -p 127.0.0.1:8000:8000 -e HUB_DEMO=1 -e HUB_ALLOW_DEMO_NETWORK=1 semantic-hub:test
+          for attempt in $(seq 1 30); do
+            if curl --fail http://127.0.0.1:8000/healthz; then exit 0; fi
+            sleep 1
+          done
+          docker logs hub
+          exit 1
