@@ -13,7 +13,7 @@ authors = [{name = "AI-Ready Semantic Hub contributors"}]
 dependencies = ["fastapi>=0.115,<1", "uvicorn>=0.30,<1", "pydantic>=2.10,<3", "PyYAML>=6.0.2,<7", "httpx>=0.28,<1"]
 
 [project.optional-dependencies]
-mcp = ["mcp>=1.28,<2"]
+mcp = ["mcp>=1.28,<3"]
 dev = ["ruff>=0.11,<1", "build>=1.2,<2", "playwright>=1.50,<2"]
 
 [project.scripts]
